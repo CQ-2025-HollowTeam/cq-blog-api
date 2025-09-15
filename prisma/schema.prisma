@@ -23,15 +23,15 @@ model User {
     isActive Boolean @default(true)
 
     // Relations
-    authProviders UserAuthProvider[]
-    posts         Post[]
-    postComments  PostComment[]
-    postReactions PostReaction[]
+    authProviders    UserAuthProvider[]
+    posts            Post[]
+    postComments     PostComment[]
+    postReactions    PostReaction[]
     commentReactions CommentReaction[]
 
     // Timestamps
-    createdAt       DateTime          @default(now())
-    updatedAt       DateTime          @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model AuthProviders {
@@ -91,7 +91,7 @@ model PostAttachment {
     caption  String? @db.Text
 
     // Relations
-    post   Post @relation(fields: [postId], references: [id], onDelete: Cascade )
+    post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
     postId Int
 
     // Timestamps
@@ -117,12 +117,12 @@ model Reaction {
     type String
 
     // Relations
-    postReactions PostReaction[]
+    postReactions    PostReaction[]
     commentReactions CommentReaction[]
 
     // Timestamps
-    createdAt       DateTime          @default(now())
-    updatedAt       DateTime          @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model PostComment {
@@ -130,9 +130,10 @@ model PostComment {
     content String @db.Text
 
     // Nested relationship
-    parentId Int?
-    parent   PostComment?  @relation("CommentReplies", fields: [parentId], references: [id])
-    replies  PostComment[] @relation("CommentReplies")
+    parentId  Int?
+    parent    PostComment?      @relation("CommentReplies", fields: [parentId], references: [id])
+    replies   PostComment[]     @relation("CommentReplies")
+    reactions CommentReaction[]
 
     // Relations
     author   User   @relation(fields: [authorId], references: [id])
@@ -141,8 +142,8 @@ model PostComment {
     postId   Int
 
     // Timestamps
-    createdAt       DateTime          @default(now())
-    updatedAt       DateTime          @updatedAt
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model PostReaction {
