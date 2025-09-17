@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppConfiguration } from './config/app.config';
 import { JoiValidationSchema } from './config/joi.validation';
 import { PrismaModule } from './prisma/prisma.module';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
     imports: [
@@ -11,6 +12,7 @@ import { PrismaModule } from './prisma/prisma.module';
             validationSchema: JoiValidationSchema,
         }),
         PrismaModule,
+        PostsModule,
     ],
 })
 export class AppModule {}
