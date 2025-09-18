@@ -4,6 +4,7 @@ import { AppConfiguration } from './config/app.config';
 import { JoiValidationSchema } from './config/joi.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { PostsModule } from './posts/posts.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
     imports: [
@@ -13,6 +14,7 @@ import { PostsModule } from './posts/posts.module';
         }),
         PrismaModule,
         PostsModule,
+        AuthModule,
     ],
 })
 export class AppModule {}

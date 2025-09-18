@@ -21,6 +21,8 @@ import {
 import { PaginationPostDto } from './dto/pagination-post.dto';
 import { PaginatedResponse } from 'src/common';
 import { Post as PostModel } from '@prisma/client';
+import { RoleProtected } from 'src/auth/decorators/role-protected.decorator';
+import { Roles } from 'src/auth/interfaces/roles.interface';
 
 @Controller('posts')
 export class PostsController {
@@ -34,6 +36,7 @@ export class PostsController {
     }
 
     @Get()
+    @RoleProtected(Roles.ADMIN)
     @ApiOperation({ summary: 'Get a list of all posts with pagination or retrieve a post by slug' })
     @ApiOkResponse({ description: 'List of posts.' })
     async findAll(
