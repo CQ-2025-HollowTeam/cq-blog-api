@@ -5,6 +5,16 @@ import { PrismaClient } from '@prisma/client';
 export class PrismaService extends PrismaClient implements OnModuleInit {
     private readonly logger = new Logger(PrismaService.name);
 
+    constructor() {
+        super({
+            omit: {
+                user: {
+                    password: true,
+                }
+            }
+        })
+    }
+
     async onModuleInit() {
         this.logger.log('Connecting to the database...');
 
