@@ -23,10 +23,11 @@ model User {
     isActive Boolean @default(true)
 
     // Relations
-    authProviders UserAuthProvider[]
-    posts         Post[]
-    postComments  PostComment[]
-    postReactions PostReaction[]
+    authProviders    UserAuthProvider[]
+    posts            Post[]
+    postComments     PostComment[]
+    postReactions    PostReaction[]
+    commentReactions CommentReaction[]
 
     // Timestamps
     createdAt DateTime @default(now())
@@ -90,7 +91,7 @@ model PostAttachment {
     caption  String? @db.Text
 
     // Relations
-    post   Post @relation(fields: [postId], references: [id], onDelete: Cascade )
+    post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
     postId Int
 
     // Timestamps
@@ -116,7 +117,8 @@ model Reaction {
     type String
 
     // Relations
-    postReactions PostReaction[]
+    postReactions    PostReaction[]
+    commentReactions CommentReaction[]
 
     // Timestamps
     createdAt DateTime @default(now())
@@ -126,6 +128,12 @@ model Reaction {
 model PostComment {
     id      Int    @id @default(autoincrement())
     content String @db.Text
+
+    // Nested relationship
+    parentId  Int?
+    parent    PostComment?      @relation("CommentReplies", fields: [parentId], references: [id])
+    replies   PostComment[]     @relation("CommentReplies")
+    reactions CommentReaction[]
 
     // Relations
     author   User   @relation(fields: [authorId], references: [id])
@@ -154,4 +162,22 @@ model PostReaction {
     updatedAt DateTime @updatedAt
 
     @@unique([userId, postId])
+}
+
+model CommentReaction {
+    id Int @id @default(autoincrement())
+
+    // Relations
+    user       User        @relation(fields: [userId], references: [id])
+    userId     String
+    comment    PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+    commentId  Int
+    reaction   Reaction    @relation(fields: [reactionId], references: [id])
+    reactionId Int
+
+    // Timestamps
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, commentId])
 }

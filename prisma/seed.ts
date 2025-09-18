@@ -129,6 +129,26 @@ async function main() {
 
         await prisma.postComment.createMany({ data: commentData });
         await prisma.postReaction.createMany({ data: reactionData });
+
+        // 6) Reactions to comments
+        const comments = await prisma.postComment.findMany({
+            where: { postId: post.id },
+        });
+
+        const commentReactionData: Prisma.CommentReactionCreateManyInput[] = [];
+
+        for (const comment of comments) {
+            for (const user of users) {
+                if (Math.random() < REACT_CHANCE) {
+                    commentReactionData.push({
+                        commentId: comment.id,
+                        reactionId: reaction.id,
+                        userId: user.id,
+                    });
+                }
+            }
+        }
+        await prisma.commentReaction.createMany({ data: commentReactionData });
     }
 
     console.log('Seed data inserted');
