@@ -1,5 +1,6 @@
 import { Category, Post, Prisma, PrismaClient, User } from '@prisma/client';
 import { faker } from '@faker-js/faker';
+import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
@@ -17,12 +18,16 @@ function uniqueSlug(title: string) {
     return `${base}-${faker.string.alphanumeric(6).toLowerCase()}`;
 }
 
-function createRandomUser(role: number): Prisma.UserCreateManyInput {
+async function createRandomUser(
+    role: number,
+): Promise<Prisma.UserCreateManyInput> {
+    const username = faker.internet.username().toLowerCase();
+
     return {
-        username: faker.internet.username().toLowerCase(),
+        username: username,
         email: faker.internet.email().toLowerCase(),
         name: faker.person.fullName(),
-        password: faker.internet.password(),
+        password: await argon2.hash(username), // password is the same as username
         role: role,
         isActive: faker.datatype.boolean(),
     };
@@ -83,14 +88,16 @@ async function main() {
 
     // 3) Users and admin user
     await prisma.user.createMany({
-        data: Array.from({ length: NUM_USERS }, () =>
-            createRandomUser(ROLE_USER),
+        data: await Promise.all(
+            Array.from({ length: NUM_USERS }, () =>
+                createRandomUser(ROLE_USER),
+            ),
         ),
         skipDuplicates: true,
     });
 
     const admin = await prisma.user.create({
-        data: createRandomUser(ROLE_ADMIN),
+        data: await createRandomUser(ROLE_ADMIN),
     });
 
     // Fetch users for later use
