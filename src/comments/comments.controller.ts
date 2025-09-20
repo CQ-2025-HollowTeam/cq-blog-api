@@ -19,12 +19,18 @@ import {
     ApiParam,
 } from '@nestjs/swagger';
 import { PaginationCommentDto } from './dto/pagination-comment.dto';
-import { PostComment } from '@prisma/client';
+import { CommentReaction, PostComment } from '@prisma/client';
 import { PaginatedResponse } from 'src/common';
+import { CreateReactionDto } from 'src/reactions/dto/create-reaction.dto';
+import { ReactionsService } from 'src/reactions/reactions.service';
+import { RemoveReactionDto } from 'src/reactions/dto/remove-reaction.dto';
 
 @Controller('posts/:postId/comments')
 export class CommentsController {
-    constructor(private readonly commentsService: CommentsService) {}
+    constructor(
+        private readonly commentsService: CommentsService,
+        private readonly reactionsService: ReactionsService,
+    ) {}
 
     @Post()
     @ApiOperation({ summary: 'Create a new comment on a specific post' })
@@ -122,5 +128,68 @@ export class CommentsController {
         @Param('id', ParseIntPipe) id: number,
     ): Promise<PostComment> {
         return this.commentsService.remove(postId, id);
+    }
+
+    @Post(':id/reactions')
+    @ApiOperation({
+        summary: 'Add or update a reaction to a comment',
+        description:
+            'Creates a new reaction or updates an existing one for the specified comment. Each user can only have one reaction per comment.',
+    })
+    @ApiParam({
+        name: 'postId',
+        description: 'ID of the post containing the comment',
+        type: Number,
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'The ID of the comment to react to',
+        type: Number,
+    })
+    @ApiOkResponse({
+        description: 'Reaction added or updated successfully',
+    })
+    @ApiNotFoundResponse({ description: 'Comment not found.' })
+    createOrUpdateReaction(
+        @Param('postId', ParseIntPipe) postId: number,
+        @Param('id', ParseIntPipe) commentId: number,
+        @Body() createReactionDto: CreateReactionDto,
+    ): Promise<CommentReaction> {
+        return this.reactionsService.createOrUpdateCommentReaction(
+            createReactionDto,
+            commentId,
+            postId
+        );
+    }
+
+    @Delete(':id/reactions')
+    @ApiOperation({
+        summary: 'Remove a reaction from a comment',
+        description: "Removes the user's reaction from the specified comment",
+    })
+    @ApiParam({
+        name: 'postId',
+        description: 'ID of the post containing the comment',
+        type: Number,
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'The ID of the comment to remove reaction from',
+        type: Number,
+    })
+    @ApiOkResponse({
+        description: 'Reaction removed successfully',
+    })
+    @ApiNotFoundResponse({ description: 'Comment or reaction not found.' })
+    removeReaction(
+        @Param('postId', ParseIntPipe) postId: number,
+        @Param('id', ParseIntPipe) commentId: number,
+        @Body() removeReactionDto: RemoveReactionDto,
+    ): Promise<CommentReaction> {
+        return this.reactionsService.removeCommentReaction(
+            removeReactionDto,
+            commentId,
+            postId
+        );
     }
 }
