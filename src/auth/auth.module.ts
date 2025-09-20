@@ -8,6 +8,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { DiscordStrategy } from './strategies/discord.strategy';
+import { AuthStrategy } from './enums/auth-strategy.enum';
 
 @Module({
     controllers: [AuthController],
@@ -15,13 +17,14 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
         AuthService,
         PrismaService,
         JwtStrategy,
+        DiscordStrategy,
         {
             provide: APP_GUARD,
             useClass: JwtAuthGuard,
         },
     ],
     imports: [
-        PassportModule.register({ defaultStrategy: 'jwt' }),
+        PassportModule.register({ defaultStrategy: AuthStrategy.JWT }),
 
         JwtModule.registerAsync({
             imports: [ConfigModule],
@@ -37,6 +40,6 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
         }),
         ConfigModule,
     ],
-    exports: [JwtStrategy, PassportModule, JwtModule],
+    exports: [AuthService, JwtStrategy, DiscordStrategy],
 })
 export class AuthModule {}

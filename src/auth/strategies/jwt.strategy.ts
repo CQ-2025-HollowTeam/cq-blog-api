@@ -5,9 +5,10 @@ import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AuthStrategy } from '../enums/auth-strategy.enum';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, AuthStrategy.JWT) {
     constructor(
         private prisma: PrismaService,
         private configService: ConfigService,

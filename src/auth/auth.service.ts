@@ -4,12 +4,12 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as argon2 from 'argon2';
 import { LoginUserDto } from './dto/login-dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { JwtService } from '@nestjs/jwt';
+import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -18,8 +18,21 @@ export class AuthService {
         private readonly jwtService: JwtService,
     ) {}
 
-    async create(createUserDto: CreateUserDto) {
-        const { username, email, password } = createUserDto;
+    async createUser(userData: Prisma.UserCreateInput): Promise<User> {
+        if (userData.password) {
+            userData.password = await argon2.hash(userData.password);
+        }
+
+        return await this.prisma.user.create({ data: userData });
+    }
+
+    getJwtToken(payload: JwtPayload): string {
+        const token = this.jwtService.sign(payload);
+        return token;
+    }
+
+    async register(createUserDto: CreateUserDto) {
+        const { username, email } = createUserDto;
 
         const existingUser = await this.prisma.user.findFirst({
             where: {
@@ -33,15 +46,9 @@ export class AuthService {
             );
         }
 
-        const user = await this.prisma.user.create({
-            data: {
-                ...createUserDto,
-                password: await argon2.hash(password),
-            },
-        });
+        const user = await this.createUser(createUserDto);
 
         return {
-            ...user,
             token: this.getJwtToken({ id: user.id }),
         };
     }
@@ -71,13 +78,12 @@ export class AuthService {
         }
 
         return {
-            ...user,
             token: this.getJwtToken({ id: user.id }),
         };
     }
 
-    private getJwtToken(payload: JwtPayload) {
-        const token = this.jwtService.sign(payload);
-        return token;
+    // Redirect to frontend with JWT token
+    async loginWithDiscord(user: User): Promise<string> {
+        return this.getJwtToken({ id: user.id });
     }
 }
