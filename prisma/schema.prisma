@@ -21,6 +21,7 @@ model User {
     password String?  @db.Text
     role     Int     @default(0) // 0 = user, 1 = editor, 2 = admin
     isActive Boolean @default(true)
+    avatar   String?  @db.Text
 
     // Relations
     authProviders    UserAuthProvider[]
@@ -67,6 +68,7 @@ model Post {
     content  String @db.Text
     author   User   @relation(fields: [authorId], references: [id])
     authorId String
+    cover    String?  @db.Text
 
     // Relations
     attachments PostAttachment[]
