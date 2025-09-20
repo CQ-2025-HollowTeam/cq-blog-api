@@ -18,9 +18,13 @@ export class AuthService {
         private readonly jwtService: JwtService,
     ) {}
 
-    async createUser(userData: Prisma.UserCreateInput): Promise<User> {
+    async createUser(userData: Prisma.UserCreateInput, file?: Express.Multer.File): Promise<User> {
         if (userData.password) {
             userData.password = await argon2.hash(userData.password);
+        }
+
+        if (file) {
+            userData.avatar = file.path;
         }
 
         return await this.prisma.user.create({ data: userData });
@@ -31,7 +35,7 @@ export class AuthService {
         return token;
     }
 
-    async register(createUserDto: CreateUserDto) {
+    async register(createUserDto: CreateUserDto, file: Express.Multer.File) {
         const { username, email } = createUserDto;
 
         const existingUser = await this.prisma.user.findFirst({
@@ -46,7 +50,7 @@ export class AuthService {
             );
         }
 
-        const user = await this.createUser(createUserDto);
+        const user = await this.createUser(createUserDto, file);
 
         return {
             token: this.getJwtToken({ id: user.id }),

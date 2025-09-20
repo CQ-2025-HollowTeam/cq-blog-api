@@ -9,12 +9,13 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PaginationPostDto } from './dto/pagination-post.dto';
 import { Post, Prisma } from '@prisma/client';
 import { PaginatedResponse } from 'src/common';
+import { FileHelper } from 'src/common/helpers/file.helper';
 
 @Injectable()
 export class PostsService {
     constructor(private prisma: PrismaService) {}
 
-    async create(createPostDto: CreatePostDto): Promise<Post> {
+    async create(createPostDto: CreatePostDto, file?: Express.Multer.File): Promise<Post> {
         const post = await this.prisma.post.findUnique({
             where: { slug: createPostDto.slug },
         });
@@ -22,8 +23,16 @@ export class PostsService {
             throw new ConflictException('Post with this slug already exists');
         }
 
+        let coverUrl: string | undefined = undefined;
+        if (file) {
+            coverUrl = file.path;
+        }
+
         return this.prisma.post.create({
-            data: createPostDto,
+            data: {
+                ...createPostDto,
+                cover: coverUrl,
+            },
         });
     }
 
@@ -146,12 +155,22 @@ export class PostsService {
         return post;
     }
 
-    async update(id: number, updatePostDto: UpdatePostDto): Promise<Post> {
-        await this.findById(id);
+    async update(id: number, updatePostDto: UpdatePostDto, file: Express.Multer.File): Promise<Post> {
+        const post = await this.findById(id);
+
+        let coverUrl: string | undefined = undefined;
+
+        if (file) {
+            await FileHelper.deleteFile(post.cover);
+            coverUrl = file.path;
+        }
 
         return this.prisma.post.update({
             where: { id },
-            data: updatePostDto,
+            data: {
+                ...updatePostDto,
+                cover: coverUrl
+            },
         });
     }
 
