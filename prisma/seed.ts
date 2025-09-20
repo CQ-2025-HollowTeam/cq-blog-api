@@ -1,5 +1,6 @@
 import { Category, Post, Prisma, PrismaClient, User } from '@prisma/client';
 import { faker } from '@faker-js/faker';
+import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
@@ -17,12 +18,16 @@ function uniqueSlug(title: string) {
     return `${base}-${faker.string.alphanumeric(6).toLowerCase()}`;
 }
 
-function createRandomUser(role: number): Prisma.UserCreateManyInput {
+async function createRandomUser(
+    role: number,
+): Promise<Prisma.UserCreateManyInput> {
+    const username = faker.internet.username().toLowerCase();
+
     return {
-        username: faker.internet.username().toLowerCase(),
+        username: username,
         email: faker.internet.email().toLowerCase(),
         name: faker.person.fullName(),
-        password: faker.internet.password(),
+        password: await argon2.hash(username), // password is the same as username
         role: role,
         isActive: faker.datatype.boolean(),
     };
@@ -67,7 +72,13 @@ function getRandomElement<T>(array: T[]) {
 }
 
 async function main() {
-    // 1) Categories
+    // 1) Auth Providers
+    await prisma.authProviders.createMany({
+        data: [{ name: 'Discord', slug: 'discord' }],
+        skipDuplicates: true,
+    });
+
+    // 2) Categories
     await prisma.category.createMany({
         data: Array.from({ length: NUM_CATEGORIES }, createRandomCategory),
         skipDuplicates: true,
@@ -76,27 +87,29 @@ async function main() {
     // Fetch categories for later use
     const categories = await prisma.category.findMany();
 
-    // 2) Reaction (only 'like' for now)
+    // 3) Reaction (only 'like' for now)
     const reaction = await prisma.reaction.create({
         data: { type: 'like' },
     });
 
-    // 3) Users and admin user
+    // 4) Users and admin user
     await prisma.user.createMany({
-        data: Array.from({ length: NUM_USERS }, () =>
-            createRandomUser(ROLE_USER),
+        data: await Promise.all(
+            Array.from({ length: NUM_USERS }, () =>
+                createRandomUser(ROLE_USER),
+            ),
         ),
         skipDuplicates: true,
     });
 
     const admin = await prisma.user.create({
-        data: createRandomUser(ROLE_ADMIN),
+        data: await createRandomUser(ROLE_ADMIN),
     });
 
     // Fetch users for later use
     const users = await prisma.user.findMany({ where: { role: ROLE_USER } });
 
-    // 4) Posts and category assignation
+    // 5) Posts and category assignation
     const postCreates = Array.from({ length: NUM_POSTS }, () => {
         const category = getRandomElement(categories);
 
@@ -106,7 +119,7 @@ async function main() {
     });
     const posts = await prisma.$transaction(postCreates);
 
-    // 5) Comments and reactions for each post
+    // 6) Comments and reactions for each post
     for (const post of posts) {
         const commentData: Prisma.PostCommentCreateManyInput[] = [];
         const reactionData: Prisma.PostReactionCreateManyInput[] = [];
