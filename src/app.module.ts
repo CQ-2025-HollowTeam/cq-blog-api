@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
 import { ReactionsModule } from './reactions/reactions.module';
 import { AuthorsModule } from './authors/authors.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
     imports: [
@@ -20,7 +21,8 @@ import { AuthorsModule } from './authors/authors.module';
         AuthModule,
         CommentsModule,
         ReactionsModule,
-        AuthorsModule
+        AuthorsModule,
+        CategoriesModule
     ],
 })
 export class AppModule {}
