@@ -29,7 +29,7 @@ async function createRandomUser(
         name: faker.person.fullName(),
         password: await argon2.hash(username), // password is the same as username
         role: role,
-        isActive: faker.datatype.boolean(),
+        isActive: true,
     };
 }
 
