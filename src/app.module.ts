@@ -7,6 +7,7 @@ import { PostsModule } from './posts/posts.module';
 import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
 import { ReactionsModule } from './reactions/reactions.module';
+import { AuthorsModule } from './authors/authors.module';
 
 @Module({
     imports: [
@@ -18,7 +19,8 @@ import { ReactionsModule } from './reactions/reactions.module';
         PostsModule,
         AuthModule,
         CommentsModule,
-        ReactionsModule
+        ReactionsModule,
+        AuthorsModule
     ],
 })
 export class AppModule {}
