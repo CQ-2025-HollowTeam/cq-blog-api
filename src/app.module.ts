@@ -7,6 +7,9 @@ import { PostsModule } from './posts/posts.module';
 import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
 import { ReactionsModule } from './reactions/reactions.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
     imports: [
@@ -18,7 +21,15 @@ import { ReactionsModule } from './reactions/reactions.module';
         PostsModule,
         AuthModule,
         CommentsModule,
-        ReactionsModule
+        ReactionsModule,
+        MulterModule.register({
+            dest: './uploads',
+        }),
+        ServeStaticModule.forRoot({
+            rootPath: join(process.cwd(), 'uploads'),
+            serveRoot: '/api/uploads',
+            exclude: ['/api/v1*'],
+        }),
     ],
 })
 export class AppModule {}

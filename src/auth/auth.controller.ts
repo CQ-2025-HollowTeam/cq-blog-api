@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Res, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Res, HttpStatus, HttpCode, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-dto';
@@ -12,11 +12,16 @@ import {
     ApiBadRequestResponse,
     ApiBody,
     ApiConflictResponse,
+    ApiConsumes,
     ApiOkResponse,
     ApiOperation,
     ApiResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { fileImageFilter } from 'src/common/helpers/file-image-filter.helper';
+import { diskStorage } from 'multer';
+import { filename } from 'src/common/helpers/filename.helper';
 
 @Controller('auth')
 export class AuthController {
@@ -27,12 +32,34 @@ export class AuthController {
 
     @Public()
     @Post('register')
+    @UseInterceptors(FileInterceptor('file', {
+        fileFilter: fileImageFilter,
+        storage: diskStorage({
+            destination: './uploads/avatars',
+            filename: filename
+        })
+    }))
     @ApiOperation({
         summary: 'Register a new user',
         description: 'Creates a new user account with email and password',
     })
+    @ApiConsumes('multipart/form-data')
     @ApiBody({
-        type: CreateUserDto,
+        schema: {
+            type: 'object',
+            properties: {
+                username: { type: 'string' },
+                email: { type: 'string' },
+                password: { type: 'string' },
+                name: { type: 'string' },
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'User avatar file',
+                },
+            },
+            required: ['username', 'email', 'password', 'name'],
+        },
         description: 'User registration data',
     })
     @ApiOkResponse({
@@ -44,8 +71,8 @@ export class AuthController {
     @ApiConflictResponse({
         description: 'User already exists',
     })
-    create(@Body() createUserDto: CreateUserDto) {
-        return this.authService.register(createUserDto);
+    create(@Body() createUserDto: CreateUserDto, @UploadedFile('file') file: Express.Multer.File) {
+        return this.authService.register(createUserDto, file);
     }
 
     @Public()
