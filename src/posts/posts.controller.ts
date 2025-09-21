@@ -8,6 +8,7 @@ import {
     Delete,
     Query,
     ParseIntPipe,
+    DefaultValuePipe,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -17,6 +18,7 @@ import {
     ApiOkResponse,
     ApiOperation,
     ApiParam,
+    ApiQuery,
 } from '@nestjs/swagger';
 import { PaginationPostDto } from './dto/pagination-post.dto';
 import { PaginatedResponse } from 'src/common';
@@ -24,6 +26,7 @@ import { Post as PostModel, PostReaction } from '@prisma/client';
 import { ReactionsService } from 'src/reactions/reactions.service';
 import { CreateReactionDto } from 'src/reactions/dto/create-reaction.dto';
 import { RemoveReactionDto } from 'src/reactions/dto/remove-reaction.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('posts')
 export class PostsController {
@@ -49,6 +52,23 @@ export class PostsController {
         @Query() paginationPostDto: PaginationPostDto,
     ): Promise<PaginatedResponse<PostModel> | PostModel> {
         return this.postsService.find(paginationPostDto);
+    }
+
+    @Public()
+    @Get('trending')
+    @ApiOperation({
+        summary: 'Get trending posts',
+        description: 'Returns the most popular posts based on comment count'
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Number of trending posts to return (default: 3)',
+    })
+    @ApiOkResponse({ description: 'Trending posts retrieved successfully' })
+    findTrending(@Query('limit', new DefaultValuePipe(3), ParseIntPipe) limit?: number): Promise<PostModel[]> {
+        return this.postsService.findTrending(limit);
     }
 
     @Get(':id')

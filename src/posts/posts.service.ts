@@ -162,4 +162,16 @@ export class PostsService {
             where: { id },
         });
     }
+
+    async findTrending(limit: number = 3): Promise<Post[]> {
+        return this.prisma.post.findMany({
+            include: {
+                author: true,
+                categories: true,
+                _count: { select: { comments: true } }
+            },
+            orderBy: { comments: { _count: 'desc' } },
+            take: limit,
+        });
+    }
 }
