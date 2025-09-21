@@ -32,7 +32,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { fileImageFilter } from 'src/common/helpers/file-image-filter.helper';
 import { diskStorage } from 'multer';
 import { filename } from 'src/common/helpers/filename.helper';
-import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('posts')
 export class PostsController {
@@ -41,7 +40,6 @@ export class PostsController {
         private readonly reactionsService: ReactionsService,
     ) {}
 
-    @Public()
     @Post()
     @UseInterceptors(FileInterceptor('file', {
         fileFilter: fileImageFilter,
@@ -101,7 +99,6 @@ export class PostsController {
         return this.postsService.findById(id);
     }
 
-    @Public()
     @Patch(':id')
     @UseInterceptors(FileInterceptor('file', {
         fileFilter: fileImageFilter,
