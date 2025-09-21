@@ -65,10 +65,11 @@ export class AuthService {
                 id: true,
                 username: true,
                 password: true,
+                isActive: true,
             },
         });
 
-        if (!user) {
+        if (!user || !user.isActive) {
             throw invalidCredentialsError;
         }
 
