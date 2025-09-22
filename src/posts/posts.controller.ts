@@ -27,6 +27,8 @@ import { ReactionsService } from 'src/reactions/reactions.service';
 import { CreateReactionDto } from 'src/reactions/dto/create-reaction.dto';
 import { RemoveReactionDto } from 'src/reactions/dto/remove-reaction.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { RoleProtected } from 'src/auth/decorators/role-protected.decorator';
+import { Role } from 'src/auth/enums/role.enum';
 
 @Controller('posts')
 export class PostsController {
@@ -35,6 +37,7 @@ export class PostsController {
         private readonly reactionsService: ReactionsService,
     ) {}
 
+    @RoleProtected(Role.ADMIN, Role.EDITOR)
     @Post()
     @ApiOperation({ summary: 'Create a new post' })
     @ApiOkResponse({ description: 'Post created successfully' })
@@ -42,6 +45,7 @@ export class PostsController {
         return this.postsService.create(createPostDto);
     }
 
+    @Public()
     @Get()
     @ApiOperation({
         summary:
@@ -71,6 +75,7 @@ export class PostsController {
         return this.postsService.findTrending(limit);
     }
 
+    @Public()
     @Get(':id')
     @ApiOperation({ summary: 'Retrieve a post by ID' })
     @ApiParam({
@@ -84,6 +89,7 @@ export class PostsController {
         return this.postsService.findById(id);
     }
 
+    @RoleProtected(Role.ADMIN, Role.EDITOR)
     @Patch(':id')
     @ApiOperation({ summary: 'Update an existing post' })
     @ApiOkResponse({ description: 'Post updated successfully.' })
@@ -95,6 +101,7 @@ export class PostsController {
         return this.postsService.update(id, updatePostDto);
     }
 
+    @RoleProtected(Role.ADMIN, Role.EDITOR)
     @Delete(':id')
     @ApiOperation({ summary: 'Delete a post' })
     @ApiOkResponse({ description: 'Post deleted successfully.' })
