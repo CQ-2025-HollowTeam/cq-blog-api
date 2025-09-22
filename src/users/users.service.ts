@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { UpdateUserDto } from 'src/auth/dto/update-user.dto';
+import { Role } from 'src/auth/enums/role.enum';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -19,7 +20,13 @@ export class UsersService {
         return user;
     }
 
-    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    async update(
+        id: string,
+        updateUserDto: UpdateUserDto,
+        user: User,
+    ): Promise<User> {
+        this.validatePermissions(id, user);
+
         await this.findOne(id);
 
         return this.prisma.user.update({
@@ -28,7 +35,9 @@ export class UsersService {
         });
     }
 
-    async remove(id: string): Promise<User> {
+    async remove(id: string, user: User): Promise<User> {
+        this.validatePermissions(id, user);
+
         await this.findOne(id);
 
         return this.prisma.user.update({
@@ -43,7 +52,15 @@ export class UsersService {
                 OR: [{ username: value }, { email: value }],
             },
         });
-        
+
         return !!user;
+    }
+
+    private validatePermissions(targetUserId: string, currentUser: User): void {
+        if (currentUser.role !== Role.ADMIN && currentUser.id !== targetUserId) {
+            throw new ForbiddenException(
+                'You do not have permission to perform this action',
+            );
+        }
     }
 }

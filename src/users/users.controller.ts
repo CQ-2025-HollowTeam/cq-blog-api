@@ -21,6 +21,7 @@ import {
     ApiParam,
     ApiQuery,
 } from '@nestjs/swagger';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -100,12 +101,16 @@ export class UsersController {
     update(
         @Param('id', ParseUUIDPipe) id: string,
         @Body() updateUserDto: UpdateUserDto,
+        @GetUser() user: User,
     ): Promise<User> {
-        return this.usersService.update(id, updateUserDto);
+        return this.usersService.update(id, updateUserDto, user);
     }
 
     @Delete(':id')
-    remove(@Param('id', ParseUUIDPipe) id: string): Promise<User> {
-        return this.usersService.remove(id);
+    remove(
+        @Param('id', ParseUUIDPipe) id: string,
+        @GetUser() user: User,
+    ): Promise<User> {
+        return this.usersService.remove(id, user);
     }
 }
