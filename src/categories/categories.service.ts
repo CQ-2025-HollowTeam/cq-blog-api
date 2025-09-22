@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     ConflictException,
     Injectable,
     NotFoundException,
@@ -63,5 +64,34 @@ export class CategoriesService {
         return this.prisma.category.delete({
             where: { id },
         });
+    }
+
+    /**
+     * Validates an array of category IDs.
+     * Throws BadRequestException if any ID does not exist.
+     *
+     * @param categoryIds - Array of category IDs to validate
+     * @returns Array of existing category objects
+     */
+    async validateCategoryIds(categoryIds: number[]) {
+        if (!categoryIds || categoryIds.length === 0) return [];
+
+        const existingCategories = await this.prisma.category.findMany({
+            where: { id: { in: categoryIds } },
+            select: { id: true },
+        });
+
+        const existingIds = existingCategories.map((c) => c.id);
+        const invalidIds = categoryIds.filter(
+            (id) => !existingIds.includes(id),
+        );
+
+        if (invalidIds.length > 0) {
+            throw new BadRequestException(
+                `Invalid category IDs: ${invalidIds.join(', ')}`,
+            );
+        }
+
+        return existingCategories;
     }
 }

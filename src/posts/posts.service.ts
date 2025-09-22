@@ -9,21 +9,41 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PaginationPostDto } from './dto/pagination-post.dto';
 import { Post, Prisma } from '@prisma/client';
 import { PaginatedResponse } from 'src/common';
+import { CategoriesService } from 'src/categories/categories.service';
 
 @Injectable()
 export class PostsService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private categoryService: CategoriesService,
+    ) {}
 
     async create(createPostDto: CreatePostDto): Promise<Post> {
+        const { categories, ...postData } = createPostDto;
+
         const post = await this.prisma.post.findUnique({
-            where: { slug: createPostDto.slug },
+            where: { slug: postData.slug },
         });
+
         if (post) {
             throw new ConflictException('Post with this slug already exists');
         }
 
+        // Validate categories
+        const validCategories = await this.categoryService.validateCategoryIds(
+            createPostDto.categories,
+        );
+
         return this.prisma.post.create({
-            data: createPostDto,
+            data: {
+                ...postData,
+                categories: {
+                    connect: validCategories,
+                },
+            },
+            include: {
+                categories: true,
+            },
         });
     }
 
@@ -147,11 +167,21 @@ export class PostsService {
     }
 
     async update(id: number, updatePostDto: UpdatePostDto): Promise<Post> {
+        const { categories, ...postData } = updatePostDto;
+
         await this.findById(id);
 
         return this.prisma.post.update({
             where: { id },
-            data: updatePostDto,
+            data: {
+                ...postData,
+                categories: {
+                    set: categories.map((categoryId) => ({ id: categoryId })),
+                }
+            },
+            include: {
+                categories: true
+            }
         });
     }
 
