@@ -51,6 +51,13 @@ export class UsersController {
         return this.usersService.checkAvailability(value);
     }
 
+    @Get('me')
+    @ApiOperation({ summary: 'Get current user profile' })
+    @ApiOkResponse({ description: 'Current user retrieved successfully' })
+    getMe(@GetUser() user: User): User {
+        return user;
+    }
+
     @Get(':id')
     @ApiOperation({
         summary: 'Get user by ID',
