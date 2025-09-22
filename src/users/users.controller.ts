@@ -107,6 +107,27 @@ export class UsersController {
     }
 
     @Delete(':id')
+    @ApiOperation({
+        summary: 'Delete user profile',
+        description:
+            'Deletes a user account and all associated data',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Unique identifier of the user to delete (UUID)',
+        type: String,
+        format: 'uuid',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+    })
+    @ApiOkResponse({
+        description: 'User deleted successfully',
+    })
+    @ApiNotFoundResponse({
+        description: 'User with the specified ID not found',
+    })
+    @ApiBadRequestResponse({
+        description: 'Invalid data provided or UUID format incorrect',
+    })
     remove(
         @Param('id', ParseUUIDPipe) id: string,
         @GetUser() user: User,
