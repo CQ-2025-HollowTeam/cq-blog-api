@@ -30,6 +30,7 @@ export class UsersService {
         updateUserDto: UpdateUserDto,
         user: User,
     ): Promise<User> {
+        // Validate permissions: only admins or the user themselves can update
         this.validatePermissions(id, user);
 
         // Check if selected username or email is already taken by another user
@@ -48,8 +49,10 @@ export class UsersService {
     }
 
     async remove(id: string, user: User): Promise<User> {
+        // Validate permissions: only admins or the user themselves can delete
         this.validatePermissions(id, user);
 
+        // Ensure the user exists before deleting
         await this.findOne(id);
 
         return this.prisma.user.update({
@@ -58,6 +61,12 @@ export class UsersService {
         });
     }
 
+    /**
+     * Checks if the given username or email is already taken by another user.
+     *
+     * @param value Username or email to check for availability
+     * @returns True if the username or email is taken, false otherwise
+     */
     async checkAvailability(value: string): Promise<boolean> {
         const user = await this.prisma.user.findFirst({
             where: {
@@ -68,6 +77,13 @@ export class UsersService {
         return !!user;
     }
 
+    /**
+     * Validates if the current user has permission to perform actions on the target user.
+     *
+     * @param targetUserId ID of the user to be acted upon
+     * @param currentUser The user attempting the action
+     * @throws ForbiddenException if the current user lacks permission
+     */
     private validatePermissions(targetUserId: string, currentUser: User): void {
         if (currentUser.role !== Role.ADMIN && currentUser.id !== targetUserId) {
             throw new ForbiddenException(
