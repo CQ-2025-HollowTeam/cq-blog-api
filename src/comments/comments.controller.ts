@@ -24,6 +24,7 @@ import { PaginatedResponse } from 'src/common';
 import { CreateReactionDto } from 'src/reactions/dto/create-reaction.dto';
 import { ReactionsService } from 'src/reactions/reactions.service';
 import { RemoveReactionDto } from 'src/reactions/dto/remove-reaction.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('posts/:postId/comments')
 export class CommentsController {
@@ -48,6 +49,7 @@ export class CommentsController {
         return this.commentsService.create(postId, createCommentDto);
     }
 
+    @Public()
     @Get()
     @ApiOperation({
         summary: 'Get all comments for a specific post with pagination',
@@ -66,6 +68,7 @@ export class CommentsController {
         return this.commentsService.findAll(postId, paginationCommentDto);
     }
 
+    @Public()
     @Get(':id')
     @ApiOperation({ summary: 'Get a specific comment by its ID from a post' })
     @ApiParam({
