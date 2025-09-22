@@ -12,7 +12,7 @@ export class CommentsService {
 
     async create(
         postId: number,
-        createCommentDto: CreateCommentDto,
+        createCommentDto: CreateCommentDto & { authorId: string },
     ): Promise<PostComment> {
         const { authorId, content, parentId } = createCommentDto;
 

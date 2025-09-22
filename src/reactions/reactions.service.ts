@@ -1,15 +1,18 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CommentReaction, PostReaction } from '@prisma/client';
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReactionDto } from './dto/create-reaction.dto';
-import { RemoveReactionDto } from './dto/remove-reaction.dto';
 
 @Injectable()
 export class ReactionsService {
     constructor(private prisma: PrismaService) {}
 
     async createOrUpdatePostReaction(
-        createReactionDto: CreateReactionDto,
+        createReactionDto: CreateReactionDto & { userId: string },
         postId: number,
     ): Promise<PostReaction> {
         const { userId, reactionId } = createReactionDto;
@@ -30,11 +33,9 @@ export class ReactionsService {
     }
 
     async removePostReaction(
-        removeReactionDto: RemoveReactionDto,
         postId: number,
+        userId: string,
     ): Promise<PostReaction> {
-        const { userId } = removeReactionDto;
-
         const post = await this.prisma.post.findUnique({
             where: { id: postId },
         });
@@ -57,7 +58,7 @@ export class ReactionsService {
     }
 
     async createOrUpdateCommentReaction(
-        createReactionDto: CreateReactionDto,
+        createReactionDto: CreateReactionDto & { userId: string },
         commentId: number,
         postId: number,
     ): Promise<CommentReaction> {
@@ -85,11 +86,10 @@ export class ReactionsService {
     }
 
     async removeCommentReaction(
-        removeReactionDto: RemoveReactionDto,
         commentId: number,
         postId: number,
+        userId: string,
     ): Promise<CommentReaction> {
-        const { userId } = removeReactionDto;
         const comment = await this.prisma.postComment.findUnique({
             where: { id: commentId },
             include: { post: true },

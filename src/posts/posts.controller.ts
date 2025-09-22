@@ -22,13 +22,13 @@ import {
 } from '@nestjs/swagger';
 import { PaginationPostDto } from './dto/pagination-post.dto';
 import { PaginatedResponse } from 'src/common';
-import { Post as PostModel, PostReaction } from '@prisma/client';
+import { Post as PostModel, PostReaction, User } from '@prisma/client';
 import { ReactionsService } from 'src/reactions/reactions.service';
 import { CreateReactionDto } from 'src/reactions/dto/create-reaction.dto';
-import { RemoveReactionDto } from 'src/reactions/dto/remove-reaction.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { RoleProtected } from 'src/auth/decorators/role-protected.decorator';
 import { Role } from 'src/auth/enums/role.enum';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
 
 @Controller('posts')
 export class PostsController {
@@ -41,8 +41,14 @@ export class PostsController {
     @Post()
     @ApiOperation({ summary: 'Create a new post' })
     @ApiOkResponse({ description: 'Post created successfully' })
-    create(@Body() createPostDto: CreatePostDto): Promise<PostModel> {
-        return this.postsService.create(createPostDto);
+    create(
+        @Body() createPostDto: CreatePostDto,
+        @GetUser() user: User,
+    ): Promise<PostModel> {
+        return this.postsService.create({
+            ...createPostDto,
+            authorId: user.id,
+        });
     }
 
     @Public()
@@ -128,9 +134,10 @@ export class PostsController {
     createOrUpdateReaction(
         @Param('id', ParseIntPipe) postId: number,
         @Body() createReactionDto: CreateReactionDto,
+        @GetUser() user: User,
     ): Promise<PostReaction> {
         return this.reactionsService.createOrUpdatePostReaction(
-            createReactionDto,
+            { ...createReactionDto, userId: user.id },
             postId,
         );
     }
@@ -150,8 +157,8 @@ export class PostsController {
     })
     removeReaction(
         @Param('id', ParseIntPipe) postId: number,
-        @Body() removeReactionDto: RemoveReactionDto,
+        @GetUser() user: User,
     ): Promise<PostReaction> {
-        return this.reactionsService.removePostReaction(removeReactionDto, postId);
+        return this.reactionsService.removePostReaction(postId, user.id);
     }
 }

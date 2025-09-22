@@ -19,12 +19,12 @@ import {
     ApiParam,
 } from '@nestjs/swagger';
 import { PaginationCommentDto } from './dto/pagination-comment.dto';
-import { CommentReaction, PostComment } from '@prisma/client';
+import { CommentReaction, PostComment, User } from '@prisma/client';
 import { PaginatedResponse } from 'src/common';
 import { CreateReactionDto } from 'src/reactions/dto/create-reaction.dto';
 import { ReactionsService } from 'src/reactions/reactions.service';
-import { RemoveReactionDto } from 'src/reactions/dto/remove-reaction.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
 
 @Controller('posts/:postId/comments')
 export class CommentsController {
@@ -45,8 +45,12 @@ export class CommentsController {
     create(
         @Param('postId', ParseIntPipe) postId: number,
         @Body() createCommentDto: CreateCommentDto,
+        @GetUser() user: User,
     ): Promise<PostComment> {
-        return this.commentsService.create(postId, createCommentDto);
+        return this.commentsService.create(postId, {
+            ...createCommentDto,
+            authorId: user.id,
+        });
     }
 
     @Public()
@@ -157,11 +161,12 @@ export class CommentsController {
         @Param('postId', ParseIntPipe) postId: number,
         @Param('id', ParseIntPipe) commentId: number,
         @Body() createReactionDto: CreateReactionDto,
+        @GetUser() user: User,
     ): Promise<CommentReaction> {
         return this.reactionsService.createOrUpdateCommentReaction(
-            createReactionDto,
+            { ...createReactionDto, userId: user.id },
             commentId,
-            postId
+            postId,
         );
     }
 
@@ -187,12 +192,12 @@ export class CommentsController {
     removeReaction(
         @Param('postId', ParseIntPipe) postId: number,
         @Param('id', ParseIntPipe) commentId: number,
-        @Body() removeReactionDto: RemoveReactionDto,
+        @GetUser() user: User,
     ): Promise<CommentReaction> {
         return this.reactionsService.removeCommentReaction(
-            removeReactionDto,
             commentId,
-            postId
+            postId,
+            user.id,
         );
     }
 }
