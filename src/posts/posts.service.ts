@@ -15,15 +15,25 @@ export class PostsService {
     constructor(private prisma: PrismaService) {}
 
     async create(createPostDto: CreatePostDto): Promise<Post> {
+        const { categories, ...postData } = createPostDto;
+
         const post = await this.prisma.post.findUnique({
-            where: { slug: createPostDto.slug },
+            where: { slug: postData.slug },
         });
         if (post) {
             throw new ConflictException('Post with this slug already exists');
         }
 
         return this.prisma.post.create({
-            data: createPostDto,
+            data: {
+                ...postData,
+                categories: {
+                    connect: categories.map((categoryId) => ({ id: categoryId })),
+                }
+            },
+            include: {
+                categories: true
+            }
         });
     }
 
@@ -147,11 +157,21 @@ export class PostsService {
     }
 
     async update(id: number, updatePostDto: UpdatePostDto): Promise<Post> {
+        const { categories, ...postData } = updatePostDto;
+
         await this.findById(id);
 
         return this.prisma.post.update({
             where: { id },
-            data: updatePostDto,
+            data: {
+                ...postData,
+                categories: {
+                    set: categories.map((categoryId) => ({ id: categoryId })),
+                }
+            },
+            include: {
+                categories: true
+            }
         });
     }
 
