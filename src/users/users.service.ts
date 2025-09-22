@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { User } from '@prisma/client';
 import { UpdateUserDto } from 'src/auth/dto/update-user.dto';
 import { Role } from 'src/auth/enums/role.enum';
@@ -27,6 +32,13 @@ export class UsersService {
     ): Promise<User> {
         this.validatePermissions(id, user);
 
+        // Check if selected username or email is already taken by another user
+        await this.validateUniqueUser(
+            { email: updateUserDto.email, username: updateUserDto.username },
+            id,
+        );
+
+        // Ensure the user exists before updating
         await this.findOne(id);
 
         return this.prisma.user.update({
@@ -61,6 +73,33 @@ export class UsersService {
             throw new ForbiddenException(
                 'You do not have permission to perform this action',
             );
+        }
+    }
+
+    /**
+     * Checks if email or username are already taken by other users.
+     *
+     * @param data - Object containing email and username
+     * @param excludeUserId - Optional user ID to exclude (for updates)
+     * @throws BadRequestException if email or username is already used
+     */
+    async validateUniqueUser(
+        data: { email: string; username: string },
+        excludeUserId?: string,
+    ) {
+        const existingUsers = await this.prisma.user.findMany({
+            where: {
+                OR: [{ email: data.email }, { username: data.username }],
+                NOT: excludeUserId ? { id: excludeUserId } : undefined,
+            },
+        });
+
+        if (existingUsers.some((u) => u.email === data.email)) {
+            throw new BadRequestException('Email already in use');
+        }
+
+        if (existingUsers.some((u) => u.username === data.username)) {
+            throw new BadRequestException('Username already in use');
         }
     }
 }
