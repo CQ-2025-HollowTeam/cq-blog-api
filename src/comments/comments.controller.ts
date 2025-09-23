@@ -112,8 +112,9 @@ export class CommentsController {
         @Param('postId', ParseIntPipe) postId: number,
         @Param('id', ParseIntPipe) id: number,
         @Body() updateCommentDto: UpdateCommentDto,
+        @GetUser() user: User,
     ): Promise<PostComment> {
-        return this.commentsService.update(postId, id, updateCommentDto);
+        return this.commentsService.update(postId, id, updateCommentDto, user);
     }
 
     @Delete(':id')
@@ -133,8 +134,9 @@ export class CommentsController {
     remove(
         @Param('postId', ParseIntPipe) postId: number,
         @Param('id', ParseIntPipe) id: number,
+        @GetUser() user: User,
     ): Promise<PostComment> {
-        return this.commentsService.remove(postId, id);
+        return this.commentsService.remove(postId, id, user);
     }
 
     @Post(':id/reactions')
