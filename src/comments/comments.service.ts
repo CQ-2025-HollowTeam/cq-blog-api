@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PaginationCommentDto } from './dto/pagination-comment.dto';
-import { PostComment, Prisma } from '@prisma/client';
+import { PostComment, Prisma, User } from '@prisma/client';
 import { PaginatedResponse } from 'src/common';
+import { Role } from 'src/auth/enums/role.enum';
 
 @Injectable()
 export class CommentsService {
@@ -12,7 +17,7 @@ export class CommentsService {
 
     async create(
         postId: number,
-        createCommentDto: CreateCommentDto,
+        createCommentDto: CreateCommentDto & { authorId: string },
     ): Promise<PostComment> {
         const { authorId, content, parentId } = createCommentDto;
 
@@ -149,8 +154,11 @@ export class CommentsService {
         postId: number,
         id: number,
         updateCommentDto: UpdateCommentDto,
+        user: User,
     ): Promise<PostComment> {
-        await this.findOne(postId, id);
+        const comment = await this.findOne(postId, id);
+
+        this.validatePermissions(comment.authorId, user);
 
         return this.prisma.postComment.update({
             where: { id },
@@ -158,11 +166,31 @@ export class CommentsService {
         });
     }
 
-    async remove(postId: number, id: number): Promise<PostComment> {
-        await this.findOne(postId, id);
+    async remove(postId: number, id: number, user: User): Promise<PostComment> {
+        const comment = await this.findOne(postId, id);
+
+        this.validatePermissions(comment.authorId, user);
 
         return this.prisma.postComment.delete({
             where: { id },
         });
+    }
+
+    /**
+     * Validates if the current user has permission to perform actions on the target user.
+     *
+     * @param targetUserId ID of the user to be acted upon
+     * @param currentUser The user attempting the action
+     * @throws ForbiddenException if the current user lacks permission
+     */
+    private validatePermissions(targetUserId: string, currentUser: User): void {
+        if (
+            currentUser.role !== Role.ADMIN &&
+            currentUser.id !== targetUserId
+        ) {
+            throw new ForbiddenException(
+                'You do not have permission to perform this action',
+            );
+        }
     }
 }

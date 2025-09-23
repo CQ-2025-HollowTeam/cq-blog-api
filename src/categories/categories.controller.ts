@@ -24,6 +24,7 @@ import {
 import { Public } from 'src/auth/decorators/public.decorator';
 import { RoleProtected } from 'src/auth/decorators/role-protected.decorator';
 import { Role } from 'src/auth/enums/role.enum';
+import { NonEmptyBodyPipe } from 'src/common';
 
 @Controller('categories')
 export class CategoriesController {
@@ -115,7 +116,7 @@ export class CategoriesController {
     })
     update(
         @Param('id', ParseIntPipe) id: number,
-        @Body() updateCategoryDto: UpdateCategoryDto,
+        @Body(NonEmptyBodyPipe) updateCategoryDto: UpdateCategoryDto,
     ): Promise<Category> {
         return this.categoriesService.update(id, updateCategoryDto);
     }

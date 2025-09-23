@@ -22,6 +22,7 @@ import {
     ApiQuery,
 } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { NonEmptyBodyPipe } from 'src/common';
 
 @Controller('users')
 export class UsersController {
@@ -107,7 +108,7 @@ export class UsersController {
     })
     update(
         @Param('id', ParseUUIDPipe) id: string,
-        @Body() updateUserDto: UpdateUserDto,
+        @Body(NonEmptyBodyPipe) updateUserDto: UpdateUserDto,
         @GetUser() user: User,
     ): Promise<User> {
         return this.usersService.update(id, updateUserDto, user);

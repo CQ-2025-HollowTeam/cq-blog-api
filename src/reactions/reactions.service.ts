@@ -1,15 +1,30 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CommentReaction, PostReaction } from '@prisma/client';
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
+import { CommentReaction, PostReaction, Reaction } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReactionDto } from './dto/create-reaction.dto';
-import { RemoveReactionDto } from './dto/remove-reaction.dto';
 
 @Injectable()
 export class ReactionsService {
     constructor(private prisma: PrismaService) {}
 
+    async findOne(id: number): Promise<Reaction> {
+        const reaction = await this.prisma.reaction.findFirst({
+            where: { id },
+        });
+
+        if (!reaction) {
+            throw new NotFoundException(`Reaction with id #${id} not found`);
+        }
+
+        return reaction;
+    }
+
     async createOrUpdatePostReaction(
-        createReactionDto: CreateReactionDto,
+        createReactionDto: CreateReactionDto & { userId: string },
         postId: number,
     ): Promise<PostReaction> {
         const { userId, reactionId } = createReactionDto;
@@ -21,6 +36,8 @@ export class ReactionsService {
             throw new NotFoundException('Post not found');
         }
 
+        await this.findOne(reactionId);
+
         return this.prisma.postReaction.upsert({
             where: { userId_postId: { userId, postId } },
             update: { reactionId },
@@ -30,11 +47,9 @@ export class ReactionsService {
     }
 
     async removePostReaction(
-        removeReactionDto: RemoveReactionDto,
         postId: number,
+        userId: string,
     ): Promise<PostReaction> {
-        const { userId } = removeReactionDto;
-
         const post = await this.prisma.post.findUnique({
             where: { id: postId },
         });
@@ -57,7 +72,7 @@ export class ReactionsService {
     }
 
     async createOrUpdateCommentReaction(
-        createReactionDto: CreateReactionDto,
+        createReactionDto: CreateReactionDto & { userId: string },
         commentId: number,
         postId: number,
     ): Promise<CommentReaction> {
@@ -73,8 +88,12 @@ export class ReactionsService {
         }
 
         if (postId && comment.postId !== postId) {
-            throw new BadRequestException('Comment does not belong to the specified post');
+            throw new BadRequestException(
+                'Comment does not belong to the specified post',
+            );
         }
+
+        await this.findOne(reactionId);
 
         return this.prisma.commentReaction.upsert({
             where: { userId_commentId: { userId, commentId } },
@@ -85,11 +104,10 @@ export class ReactionsService {
     }
 
     async removeCommentReaction(
-        removeReactionDto: RemoveReactionDto,
         commentId: number,
         postId: number,
+        userId: string,
     ): Promise<CommentReaction> {
-        const { userId } = removeReactionDto;
         const comment = await this.prisma.postComment.findUnique({
             where: { id: commentId },
             include: { post: true },
@@ -100,7 +118,9 @@ export class ReactionsService {
         }
 
         if (postId && comment.postId !== postId) {
-            throw new BadRequestException('Comment does not belong to the specified post');
+            throw new BadRequestException(
+                'Comment does not belong to the specified post',
+            );
         }
 
         const existingReaction = await this.prisma.commentReaction.findUnique({

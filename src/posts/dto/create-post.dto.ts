@@ -20,12 +20,6 @@ export class CreatePostDto {
     content: string;
 
     @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(191)
-    authorId: string;
-
-    @ApiProperty()
     @IsArray()
     categories: number[];
 }

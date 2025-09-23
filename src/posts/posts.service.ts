@@ -18,7 +18,7 @@ export class PostsService {
         private categoryService: CategoriesService,
     ) {}
 
-    async create(createPostDto: CreatePostDto): Promise<Post> {
+    async create(createPostDto: CreatePostDto  & { authorId: string }): Promise<Post> {
         const { categories, ...postData } = createPostDto;
 
         const post = await this.prisma.post.findUnique({
