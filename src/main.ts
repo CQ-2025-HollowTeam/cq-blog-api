@@ -7,8 +7,16 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const logger = new Logger('Bootstrap');
 
+    // CORS setup
+    app.enableCors({
+        origin: process.env.FRONTEND_URL,
+        credentials: true,
+    });
+
+    // Global prefix
     app.setGlobalPrefix('api');
 
+    // Global pipes
     app.useGlobalPipes(
         new ValidationPipe({
             whitelist: true,
@@ -16,6 +24,7 @@ async function bootstrap() {
         }),
     );
 
+    // Swagger setup
     const config = new DocumentBuilder()
         .setTitle('NestJS - Blog API')
         .setDescription('Blog API description')
