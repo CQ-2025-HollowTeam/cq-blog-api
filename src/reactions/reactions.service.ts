@@ -1,15 +1,27 @@
-import { CommentReaction, PostReaction } from '@prisma/client';
 import {
     BadRequestException,
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import { CommentReaction, PostReaction, Reaction } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReactionDto } from './dto/create-reaction.dto';
 
 @Injectable()
 export class ReactionsService {
     constructor(private prisma: PrismaService) {}
+
+    async findOne(id: number): Promise<Reaction> {
+        const reaction = await this.prisma.reaction.findFirst({
+            where: { id },
+        });
+
+        if (!reaction) {
+            throw new NotFoundException(`Reaction with id #${id} not found`);
+        }
+
+        return reaction;
+    }
 
     async createOrUpdatePostReaction(
         createReactionDto: CreateReactionDto & { userId: string },
@@ -23,6 +35,8 @@ export class ReactionsService {
         if (!post) {
             throw new NotFoundException('Post not found');
         }
+
+        await this.findOne(reactionId);
 
         return this.prisma.postReaction.upsert({
             where: { userId_postId: { userId, postId } },
@@ -74,8 +88,12 @@ export class ReactionsService {
         }
 
         if (postId && comment.postId !== postId) {
-            throw new BadRequestException('Comment does not belong to the specified post');
+            throw new BadRequestException(
+                'Comment does not belong to the specified post',
+            );
         }
+
+        await this.findOne(reactionId);
 
         return this.prisma.commentReaction.upsert({
             where: { userId_commentId: { userId, commentId } },
@@ -100,7 +118,9 @@ export class ReactionsService {
         }
 
         if (postId && comment.postId !== postId) {
-            throw new BadRequestException('Comment does not belong to the specified post');
+            throw new BadRequestException(
+                'Comment does not belong to the specified post',
+            );
         }
 
         const existingReaction = await this.prisma.commentReaction.findUnique({
