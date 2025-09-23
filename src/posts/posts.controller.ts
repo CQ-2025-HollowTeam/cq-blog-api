@@ -21,7 +21,7 @@ import {
     ApiQuery,
 } from '@nestjs/swagger';
 import { PaginationPostDto } from './dto/pagination-post.dto';
-import { PaginatedResponse } from 'src/common';
+import { NonEmptyBodyPipe, PaginatedResponse } from 'src/common';
 import { Post as PostModel, PostReaction, User } from '@prisma/client';
 import { ReactionsService } from 'src/reactions/reactions.service';
 import { CreateReactionDto } from 'src/reactions/dto/create-reaction.dto';
@@ -102,7 +102,7 @@ export class PostsController {
     @ApiNotFoundResponse({ description: 'Post not found.' })
     update(
         @Param('id', ParseIntPipe) id: number,
-        @Body() updatePostDto: UpdatePostDto,
+        @Body(NonEmptyBodyPipe) updatePostDto: UpdatePostDto,
     ): Promise<PostModel> {
         return this.postsService.update(id, updatePostDto);
     }

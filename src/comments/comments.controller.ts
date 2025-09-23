@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { PaginationCommentDto } from './dto/pagination-comment.dto';
 import { CommentReaction, PostComment, User } from '@prisma/client';
-import { PaginatedResponse } from 'src/common';
+import { NonEmptyBodyPipe, PaginatedResponse } from 'src/common';
 import { CreateReactionDto } from 'src/reactions/dto/create-reaction.dto';
 import { ReactionsService } from 'src/reactions/reactions.service';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -111,7 +111,7 @@ export class CommentsController {
     update(
         @Param('postId', ParseIntPipe) postId: number,
         @Param('id', ParseIntPipe) id: number,
-        @Body() updateCommentDto: UpdateCommentDto,
+        @Body(NonEmptyBodyPipe) updateCommentDto: UpdateCommentDto,
         @GetUser() user: User,
     ): Promise<PostComment> {
         return this.commentsService.update(postId, id, updateCommentDto, user);
